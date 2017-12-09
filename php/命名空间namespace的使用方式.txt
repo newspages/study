@@ -1,0 +1,50 @@
+PHP 命名空间的定义和使用、怎么配合自动加载函数 __autoload 来实现类的自动加载
+
+命名空间跟文件加载并无直接关系，只是有些语言，将命名空间结构和文件结构对应起来了。 以php为例，一般的命名空间结构，跟php文件结构是存在映射关系的，通过命名空间名称，就能算出该类的实际存储位置， 然后实例化的时候，会触发用设置的spl自动加载函数将文件引入。
+
+比如来项目的根目录中，有一个目录叫 DB ，DB目录中有一个 Mysql.class.php文件，Mysql.class.php文件代码如下：
+#Mysql.class.php
+namespace DB;
+
+class Mysql
+{
+	public function __construct()
+	{
+		var_dump(__FILE__);
+	}
+
+	public function show()
+	{
+		echo 'This is DB\Mysql\show';
+	}
+}
+
+在根目录下有一个目录叫 Home ，Home中有一个文件index.php，index.php代码如下：
+#index.php
+namespac Home;
+
+use DB\Mysql;
+
+// 注册类自动加载
+spl_autoload_register('Home\autoload',true,true);
+// sql_autoload_register(__NAMESPACE__.'\autoload',true,true); 和上面是等价的，自从 PHP5.3.0起，要被注册的自动加载函数前面要命名空间
+
+function autoload($class)
+{
+	if ($class) {
+		$file = str_replace('\\','/',$class);
+		$file .= '.class.php';
+		if (file_exists($file)) {
+			include $file;
+		}
+	}
+}
+
+$mysql = new Mysql();
+
+
+###############################
+运行 index.php 文件的时候执行到 $mysql = new Mysql(); 这一行的时候发现 没有找到 DB\Mysql 这个类，所以会触发autoload函数自动加载 DB\Mysql 类。
+因此，如果没有注册类自动加载函数的话，就会报错。
+
+PHP 命名空间一般都会跟当前目录对应，比如上面的 Mysql 类所在的目录是 DB ，因此定义命名空间的时候也定义为 namespace DB,这个好处是当执行 $mysql = new Mysql(); 时，找不到类 DB\Mysql ,此时 DB\Mysql 将会被传入 autoload 函数，这样就可以很方便的使用require或者include方法载入该类。

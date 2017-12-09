@@ -1,0 +1,61 @@
+set_include_path详细解释
+首先
+我们来看这个全局变量：__FILE__
+它表示文件的完整路径（当然包括文件名在内）
+也就是说它根据你文件所在的目录不同，有着不同的值；当然，当它用在包行文件中的时候，它的值是包含的路径；
+
+
+
+然后：
+我们看这个函数：
+string dirname ( string path )
+它是PHP内置函数，它的作用是什么呢，就是返回除了本文件名以外的所在目录，给你举个例子
+假如你的首页中用到了_FILE_这个变量：
+（假设你的网页所在目录为：http://localhost/web/index.php）,那么：
+_FILE_的值为http://localhost/web/index.php（一个绝对路径）。而此时dirname (_FILE_)表示的就是http://localhost/web/也就是没有index.php这个文件名。
+而dirname(dirname(_FILE_))表示的就是上一级的目录，以此类推；
+
+最后
+看一下define()这个函数，其实他就是一个定义常量的函数，比如：define('MEN','ooooo');
+那么你后你就可以用MEN来表示ooooo这个字符串；
+如果你学过C语言，你就很清楚,其中也有一个类似的#define MEN "ooooo";（其实应该说哦php和C类似，因为php就是c编写的）；
+那么这么写有什么好处呢，那就是当你需要修改变量的时候，你只要修改它就行了，相当的方便，尤其是像路径这样的字符串！
+
+
+酒后给你解释一下你这段代码：
+define('__TYPECHO_ROOT_DIR__', dirname(__FILE__));
+就是定义__TYPECHO_ROOT_DIR__为这个文件所在的目录，像这种定义一般是放在config.inc.php中的，那么获取的目录也就是config.inc.php所在的目录；也就是根目录！
+
+define('__TYPECHO_PLUGIN_DIR__', '/usr/plugins'); 这就不要我说了吧！
+
+
+至于set_include_path(get_include_path() . PATH_SEPARATOR . $path);是什么意思，我想没有你想得那么复杂：他就是包含路径；
+
+比如你有一个文件夹：命名为include，里面有
+数据库连接文件：conn.php……,
+你这样设置：set_include_path("/include")
+那么以后你就直接可以在其他页面中使用
+include("conn.php")
+这不是经常见到吗？它参数就字符串，当然你也可以设置多个路径，中间用;分开，
+
+而你那句：
+set_include_path(get_include_path() . PATH_SEPARATOR .
+__TYPECHO_ROOT_DIR__ . '/var' . PATH_SEPARATOR .
+__TYPECHO_ROOT_DIR__ . __TYPECHO_PLUGIN_DIR__);
+什意思呢，举个例子：
+你的一个页面有这样的语句：
+include('/inc/sql.php');
+include('/inc/conn.php');
+;
+;
+而你突然发现我把这些要包含的文件放在inc目录下不安全，怎么办，要改，我想放到include目录中，好的，这么多页面不累死才怪：有没有好的方法！有！！！！！！！
+
+我在config.inc.php中写着么一句：
+set_include_path(get_include_path() .'/include')就这么简单，对，就这么简单！动态的修改！
+
+
+
+
+你不要看这个：get_include_path() . PATH_SEPARATOR . $path这是什么，他就一路径字符串，中间的.是字符串连接符号，也就是你刚才定义的那些常量的组合，组合成一字符串,我想你一定时认为是没见过的参数！
+一个很简单的函数，没什么多的解释!
+也好就是说他可以动态的设置包含路径！如果正确返回包含路径，不正确返回false;

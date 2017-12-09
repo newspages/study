@@ -1,0 +1,80 @@
+PHP 使用命名空间(namespace)，实现自动加载
+示例：
+
+
+#/DB/MySql.class.php也就是DB文件夹下有MySql.class.php文件
+ 
+namespace DB;
+ 
+class MySql
+{
+ 
+    public function __construct()
+    {
+        var_dump(__FILE__);
+    }
+}
+
+#/index.php
+ 
+namespace Home;
+ 
+use DB\MySql;
+ 
+$mysql = new MySql();
+报错
+
+Fatal error: Class 'DB\MySql' not found in D:\localhost\demo\space\index.php on line 23
+修改
+
+修改 index.php 改成如下，可以了，但是为什么不能自动加载？
+
+
+namespace Home;
+ 
+use DB\MySql;
+ 
+spl_autoload_register(function ($class) {
+    if ($class) {
+        $file = str_replace('\\', '/', $class);
+        $file .= '.class.php';
+        if (file_exists($file)) {
+            include $file;
+        }
+    }
+});
+ 
+$mysql = new MySql();
+要点：
+
+第一：
+
+命名空间跟文件加载并无直接关系，只是有些语言，将命名空间结构和文件结构对应起来了。 以php为例，一般的命名空间结构，跟php文件结构是存在映射关系的，通过命名空间名称，就能算出该类的实际存储位置， 然后实例化的时候，会触发用设置的spl自动加载函数将文件引入。
+
+（Xee:命名空间是事先通过自动导入或者include，require之类导入的，然后会根据命名空间对应起来，实现自动载入）
+
+第二：
+
+namespace Home;
+use DB\MySql;
+$mysql = new MySql();
+实际执行代码的时候是 new \DB\MySql(); 找不到这个文件的时候就会调用你的autoload函数 并file_exists("DB/MySql.class.php")，在当前目录下查找这个文件，在找不到的情况下然后就是你看到的错误
+
+（Xee：在被调用的MySql.class.php文件中，也要有\DB\MySql的命名空间）
+
+第三：
+
+如果刚开始了解php命名空间，去看如何使用PHP命名空间；多翻翻使用命名空间的框架的源码，如micro-mvc，slim等。
+
+还有PSR-4——新鲜出炉的PHP规范，其中就有这个：
+
+
+*      // register the base directories for the namespace prefix
+*      $loader->addNamespace('Foo\Bar', '/path/to/packages/foo-bar/src');
+*      $loader->addNamespace('Foo\Bar', '/path/to/packages/foo-bar/tests');
+第四:
+
+我们常用 db\mysql,这种形式的命名空间!不是一定要使用\这个反斜线的，还可以使用例如：db::mysql;或者db_mysql等；要在自动查找类的函数方法中进行分析.
+
+<参考：PHP命名空间 namespace 如何实现自动加载>
+
